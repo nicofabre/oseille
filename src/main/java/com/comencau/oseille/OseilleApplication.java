@@ -9,4 +9,5 @@ public class OseilleApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(OseilleApplication.class, args);
 	}
+
 }

@@ -37,4 +37,6 @@ dependencies {
 
 	compile('org.apache.tomcat.embed:tomcat-embed-jasper')
 
+	compile('org.apache.commons:commons-lang3')
+
 }
