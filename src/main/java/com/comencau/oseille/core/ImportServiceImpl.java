@@ -6,18 +6,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -31,20 +26,6 @@ import java.util.function.Function;
  */
 @Service
 public class ImportServiceImpl implements ImportService {
-
-    private static class TransactionRowMapper implements RowMapper<Transaction> {
-
-        @Nullable
-        @Override
-        public Transaction mapRow(ResultSet rs, int rowNum) throws SQLException {
-            Transaction tx = new Transaction();
-            tx.setId(rs.getLong("id"));
-            tx.setDate(DaoUtils.getLocalDate(rs, "date"));
-            tx.setAmount(rs.getBigDecimal("amount"));
-            tx.setLabel(rs.getString("label"));
-            return tx;
-        }
-    }
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -73,6 +54,7 @@ public class ImportServiceImpl implements ImportService {
 
     @Override
     public void importING(File file) throws IOException {
+        logger.debug("Import " + file.getAbsolutePath());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         List<Transaction> transactions = this.parseFile(file, 0, split -> {
             Transaction tx = new Transaction();
@@ -88,26 +70,19 @@ public class ImportServiceImpl implements ImportService {
         logger.debug("Min date : {}", min);
 
         Set<Transaction> txs = new LinkedHashSet<>(transactions);
-        List<Transaction> duplicatedTxs = new ArrayList<>();
         jdbcTemplate.query("SELECT * FROM transaction WHERE date >= ? AND date <= ?", new Object[]{min, max}, rs -> {
             TransactionRowMapper rowMapper = new TransactionRowMapper();
             while (rs.next()) {
                 Transaction tx = rowMapper.mapRow(rs, 0);
-                if (txs.contains(tx)) {
-                    duplicatedTxs.add(tx);
-                }
+                txs.remove(tx);
             }
             return null;
         });
-
-        if (!duplicatedTxs.isEmpty()) {
-            throw new RuntimeException("Duplicated transactions : " + duplicatedTxs);
-        }
-
-        this.persistTransactions(transactions);
+        this.persistTransactions(txs);
     }
 
     private void persistTransactions(Collection<Transaction> transactions) {
+        logger.debug("Persist {} transactions", transactions.size());
         for (Transaction tx : transactions) {
             Long id = jdbcTemplate.queryForObject("CALL NEXT VALUE FOR transaction_s", Long.class);
             tx.setId(id);
@@ -119,34 +94,6 @@ public class ImportServiceImpl implements ImportService {
             ps.setString(3, tx.getLabel());
             ps.setBigDecimal(4, tx.getAmount());
         });
-    }
-
-    @PostConstruct
-    public void init() {
-        jdbcTemplate.execute("DROP TABLE TRANSACTION"); // to recreate the internal database, uncomment this
-        List<String> appTables = Arrays.asList("TRANSACTION");
-        Integer count = jdbcTemplate.queryForObject("SELECT count(*) FROM INFORMATION_SCHEMA.SYSTEM_TABLES WHERE TABLE_TYPE='TABLE' AND TABLE_NAME IN (?)",
-                appTables.toArray(), Integer.class);
-        if (count != appTables.size()) {
-            for (String table : appTables) {
-                try {
-                    jdbcTemplate.execute("drop table " + table);
-                } catch (Exception e) {
-                   // logger.warn("Fail to drop table " + table, e);
-                }
-            }
-            for (String table : appTables) {
-                try {
-                    jdbcTemplate.execute("drop sequence " + table + "_s");
-                } catch (Exception e) {
-                  //  logger.warn("Fail to drop sequence " + table, e);
-                }
-            }
-            jdbcTemplate.execute("CREATE TEXT TABLE transaction (id BIGINT, date DATE NOT NULL, label VARCHAR(250) NOT NULL, amount DECIMAL NOT NULL)");
-            jdbcTemplate.execute("SET TABLE transaction SOURCE 'transaction_file;fs=\\t'");
-            jdbcTemplate.execute("CREATE SEQUENCE transaction_s START WITH 1 AS BIGINT");
-            jdbcTemplate.execute("TRUNCATE TABLE transaction AND COMMIT");
-        }
     }
 
 }

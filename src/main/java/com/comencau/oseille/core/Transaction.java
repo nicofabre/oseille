@@ -34,7 +34,7 @@ public class Transaction {
         if (obj == this) return true;
         if (obj.getClass() != getClass()) return false;
         Transaction rhs = (Transaction) obj;
-        return new EqualsBuilder().appendSuper(super.equals(obj)).append(date, rhs.date).append(label, rhs.label).append(amount, rhs.amount).isEquals();
+        return new EqualsBuilder().append(date, rhs.date).append(label, rhs.label).append(amount, rhs.amount).isEquals();
     }
 
     @Override
