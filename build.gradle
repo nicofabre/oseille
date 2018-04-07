@@ -37,8 +37,8 @@ dependencies {
 
 	compile('org.apache.tomcat.embed:tomcat-embed-jasper')
 
-	compile "javax.servlet:javax.servlet-api"
-	compile "javax.servlet.jsp:jsp-api"
+	compileOnly "javax.servlet:javax.servlet-api"
+	compileOnly "javax.servlet.jsp:jsp-api"
 	compile "javax.servlet:jstl:1.2"
 
 	compile('org.apache.tiles:tiles-jsp:3.0.7')
