@@ -14,6 +14,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
@@ -78,21 +79,30 @@ public class ImportServiceImpl implements ImportService {
             }
             return null;
         });
+
+        if (txs.isEmpty()) {
+            logger.warn("No transaction saved. All transactions matched already saved transaction");
+            return;
+        }
+
         this.persistTransactions(txs);
     }
 
-    private void persistTransactions(Collection<Transaction> transactions) {
+    private synchronized void persistTransactions(Collection<Transaction> transactions) {
         logger.debug("Persist {} transactions", transactions.size());
         for (Transaction tx : transactions) {
             Long id = jdbcTemplate.queryForObject("CALL NEXT VALUE FOR transaction_s", Long.class);
             tx.setId(id);
         }
 
-        jdbcTemplate.batchUpdate("INSERT INTO transaction (id, date, label, amount) VALUES (?,?,?,?)", transactions, 1000, (ps, tx) -> {
+        OffsetDateTime now = OffsetDateTime.now();
+        jdbcTemplate.batchUpdate("INSERT INTO transaction (id, date, label, comment, amount, creation_date) VALUES (?,?,?,?,?,?,?)", transactions, 1000, (ps, tx) -> {
             ps.setLong(1, tx.getId());
             ps.setDate(2, DaoUtils.toSqlDate(tx.getDate()));
             ps.setString(3, tx.getLabel());
-            ps.setBigDecimal(4, tx.getAmount());
+            ps.setString(4, tx.getComment());
+            ps.setBigDecimal(5, tx.getAmount());
+            ps.setObject(6, now);
         });
     }
 

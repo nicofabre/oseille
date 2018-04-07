@@ -23,7 +23,8 @@ public class DatabaseInit {
     @Test
     public void init() {
         jdbcTemplate.execute("DROP TABLE IF EXISTS TRANSACTION"); // to recreate the internal database, uncomment this
-        jdbcTemplate.execute("CREATE TABLE transaction (id BIGINT PRIMARY KEY, date DATE NOT NULL, label VARCHAR(250) NOT NULL, amount DECIMAL NOT NULL)");
+        jdbcTemplate.execute("CREATE TABLE transaction (id BIGINT PRIMARY KEY, date DATE NOT NULL, label VARCHAR(250) NOT NULL, comment varchar(500)," +
+                " amount DECIMAL NOT NULL, creation_date timestamp(0) with time zone)");
         jdbcTemplate.execute("DROP SEQUENCE IF EXISTS transaction_s");
         jdbcTemplate.execute("CREATE SEQUENCE IF NOT EXISTS transaction_s START WITH 1");
     }

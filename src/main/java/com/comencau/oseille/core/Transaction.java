@@ -6,6 +6,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 /**
  * TODO
@@ -19,9 +20,29 @@ public class Transaction {
 
     private String label;
 
+    private String comment;
+
     private BigDecimal amount;
 
+    private OffsetDateTime creationDate;// Insertion date in database
+
     private Long id;
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public OffsetDateTime getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(OffsetDateTime creationDate) {
+        this.creationDate = creationDate;
+    }
 
     @Override
     public int hashCode() {
