@@ -54,6 +54,44 @@ public class ImportServiceImpl implements ImportService {
     }
 
     @Override
+    public void parseINGFile(File file) throws IOException {
+        logger.debug("Import " + file.getAbsolutePath());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        List<Transaction> transactions = this.parseFile(file, 0, split -> {
+            Transaction tx = new Transaction();
+            tx.setDate(LocalDate.parse(split[0], formatter));
+            tx.setLabel(split[1]);
+            tx.setAmount(new BigDecimal(split[3].replaceAll(",", ".")));
+            return tx;
+        });
+
+        LocalDate max = transactions.stream().map(Transaction::getDate).max(LocalDate::compareTo).get();
+        LocalDate min = transactions.stream().map(Transaction::getDate).min(LocalDate::compareTo).get();
+        logger.debug("Max date : {}", max);
+        logger.debug("Min date : {}", min);
+
+        Set<Transaction> txs = new LinkedHashSet<>(transactions);
+        jdbcTemplate.query("SELECT * FROM transaction WHERE date >= ? AND date <= ?", new Object[]{min, max}, rs -> {
+            TransactionRowMapper rowMapper = new TransactionRowMapper();
+            while (rs.next()) {
+                Transaction tx = rowMapper.mapRow(rs, 0);
+                txs.remove(tx);
+            }
+            return null;
+        });
+
+        if (txs.isEmpty()) {
+            logger.warn("No transaction saved. All transactions matched already saved transaction");
+            return;
+        }
+
+        // Get solde
+        BigDecimal solde1 = jdbcTemplate.queryForObject("select sum(amount) from transaction", BigDecimal.class);
+        BigDecimal solde2 = txs.stream().map(t-> t.getAmount()).reduce(solde1, BigDecimal::add);
+        
+    }
+    
+    @Override
     public void importING(File file) throws IOException {
         logger.debug("Import " + file.getAbsolutePath());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");

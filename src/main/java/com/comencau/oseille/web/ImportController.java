@@ -1,18 +1,17 @@
 package com.comencau.oseille.web;
 
-import com.comencau.oseille.core.ImportService;
-import com.comencau.oseille.core.Transaction;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.List;
+import com.comencau.oseille.core.ImportService;
 
 /**
  * TODO
