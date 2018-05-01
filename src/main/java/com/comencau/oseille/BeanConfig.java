@@ -27,7 +27,6 @@ public class BeanConfig {
         TilesConfigurer tiles = new TilesConfigurer();
         tiles.setDefinitions(new String[] { "/WEB-INF/tiles-defs.xml" });
         return tiles;
-
     }
 
 }

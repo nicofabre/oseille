@@ -54,7 +54,7 @@ public class ImportServiceImpl implements ImportService {
     }
 
     @Override
-    public void parseINGFile(File file) throws IOException {
+    public ImportReport parseINGFile(File file) throws IOException {
         logger.debug("Import " + file.getAbsolutePath());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         List<Transaction> transactions = this.parseFile(file, 0, split -> {
@@ -82,13 +82,17 @@ public class ImportServiceImpl implements ImportService {
 
         if (txs.isEmpty()) {
             logger.warn("No transaction saved. All transactions matched already saved transaction");
-            return;
+            return null;
         }
 
         // Get solde
         BigDecimal solde1 = jdbcTemplate.queryForObject("select sum(amount) from transaction", BigDecimal.class);
-        BigDecimal solde2 = txs.stream().map(t-> t.getAmount()).reduce(solde1, BigDecimal::add);
-        
+        BigDecimal newSolde = txs.stream().map(t-> t.getAmount()).reduce(solde1, BigDecimal::add);
+        ImportReport report = new ImportReport();
+        report.setNewSolde(newSolde);
+        report.setTransactions(new ArrayList<>(txs));
+
+        return report;
     }
     
     @Override

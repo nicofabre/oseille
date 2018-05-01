@@ -29,13 +29,15 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter-aop')
 	compile('org.springframework.boot:spring-boot-starter-cache')
 	compile('org.springframework.boot:spring-boot-starter-jdbc')
-	compile('org.springframework.boot:spring-boot-starter-jooq')
+	//compile('org.springframework.boot:spring-boot-starter-jooq')
 	compile('org.springframework.boot:spring-boot-starter-web')
 	runtime('org.springframework.boot:spring-boot-devtools')
-	runtime('com.h2database:h2')
+
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 
-	compile('org.apache.tomcat.embed:tomcat-embed-jasper')
+	compile('org.apache.tomcat.embed:tomcat-embed-jasper')// Pour les JSPs
+
+	compile group: 'org.postgresql', name: 'postgresql', version: '42.2.2'// Driver JDBC PostgreSQL
 
 	compileOnly "javax.servlet:javax.servlet-api"
 	compileOnly "javax.servlet.jsp:jsp-api"

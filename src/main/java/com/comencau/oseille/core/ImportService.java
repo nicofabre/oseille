@@ -13,5 +13,5 @@ public interface ImportService {
 
     void importING(File file) throws IOException;
 
-	void parseINGFile(File file) throws IOException;
+	ImportReport parseINGFile(File file) throws IOException;
 }

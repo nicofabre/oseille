@@ -5,8 +5,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import com.comencau.oseille.core.ImportReport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,20 +34,11 @@ public class ImportController {
     }
 
     @RequestMapping(value = "step1", method = RequestMethod.POST)
-    public String uploadFiles(MultipartFile file) throws IOException {
+    public String uploadFiles(Model model, MultipartFile file) throws IOException {
         File f = File.createTempFile("toto", null);
         file.transferTo(f);
-        try (BufferedReader br = new BufferedReader(new FileReader(f))) {
-            int n = 0;
-            String line;
-            while ((line = br.readLine()) != null) {
-                n++;
-                System.out.println(line);
-                if (n > 10) {
-                    break;
-                }
-            }
-        }
+        ImportReport report = importService.parseINGFile(f);
+        model.addAttribute("report", report);
         return "importStep2";
     }
 
