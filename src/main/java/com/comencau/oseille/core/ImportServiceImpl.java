@@ -86,15 +86,21 @@ public class ImportServiceImpl implements ImportService {
         }
 
         // Get solde
-        BigDecimal solde1 = jdbcTemplate.queryForObject("select sum(amount) from transaction", BigDecimal.class);
-        BigDecimal newSolde = txs.stream().map(t-> t.getAmount()).reduce(solde1, BigDecimal::add);
+        BigDecimal solde1 = jdbcTemplate.query("select sum(amount) from transaction", rs -> {
+            while (rs.next()) {
+                return rs.getBigDecimal(1);
+            }
+            return null;
+        });
+        if (solde1 == null) solde1 = BigDecimal.ZERO;
+        BigDecimal newSolde = txs.stream().map(t -> t.getAmount()).reduce(solde1, BigDecimal::add);
         ImportReport report = new ImportReport();
         report.setNewSolde(newSolde);
         report.setTransactions(new ArrayList<>(txs));
 
         return report;
     }
-    
+
     @Override
     public void importING(File file) throws IOException {
         logger.debug("Import " + file.getAbsolutePath());
